@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Goals — Budget Buddy AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h1>Financial Goals</h1>
+      <p class="subtitle">Track your savings and targets</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addGoalModal')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      New Goal
+    </button>
+  </div>
+</div>
+
+{% if goals %}
+<div class="grid-3">
+  {% for g in goals %}
+  <div class="card goal-card">
+    <div class="goal-type-badge">{{ g.goal_type | upper }}</div>
+    <div style="font-size:1.1rem;font-weight:700;margin-bottom:4px;">{{ g.name }}</div>
+    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:16px;">
+      {% if g.target_date %}Target: {{ g.target_date.strftime('%d %b %Y') }}{% else %}No deadline{% endif %}
+    </div>
+
+    <div class="flex-between" style="margin-bottom:6px;">
+      <span style="font-size:0.8rem;color:var(--text-muted);">Progress</span>
+      <span style="font-size:0.9rem;font-weight:700;color:var(--mint);">{{ g.progress_percent }}%</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" style="width:{{ g.progress_percent }}%"></div>
+    </div>
+
+    <div class="flex-between mt-16" style="font-size:0.8rem;">
+      <div>
+        <div style="color:var(--text-muted);">Saved</div>
+        <div style="font-weight:600;color:var(--mint);">{{ "{:,.0f}".format(g.current_amount) }}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="color:var(--text-muted);">Target</div>
+        <div style="font-weight:600;">{{ "{:,.0f}".format(g.target_amount) }}</div>
+      </div>
+    </div>
+
+    <div class="flex-between mt-16" style="gap:8px;">
+      <span class="badge {% if g.status == 'completed' %}badge-mint{% elif g.status == 'paused' %}badge-yellow{% else %}badge-blue{% endif %}">
+        {{ g.status }}
+      </span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm"
+                onclick="openEditGoal({{ g.id }}, '{{ g.name }}', '{{ g.goal_type }}', {{ g.target_amount }}, {{ g.current_amount }}, '{{ g.status }}', '{{ g.target_date.strftime('%Y-%m-%d') if g.target_date else '' }}')">
+          Edit
+        </button>
+        <form method="POST" action="{{ url_for('goals.delete', goal_id=g.id) }}"
+              onsubmit="return confirm('Delete this goal?')" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card" style="text-align:center;padding:64px;">
+  <div style="font-size:3rem;margin-bottom:16px;">🎯</div>
+  <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">No goals yet</div>
+  <div style="color:var(--text-muted);font-size:0.875rem;margin-bottom:24px;">
+    Set a savings or investment goal to start tracking your progress.
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addGoalModal')">Create First Goal</button>
+</div>
+{% endif %}
+
+<!-- Add Goal Modal -->
+<div class="modal-overlay" id="addGoalModal" onclick="closeModalOnOverlay(event,'addGoalModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">New Goal</span>
+      <button class="modal-close" onclick="closeModal('addGoalModal')">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('goals.add') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label">Goal Name</label>
+        <input type="text" name="name" class="form-control" placeholder="Emergency Fund" required autofocus/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Goal Type</label>
+        <select name="goal_type" class="form-control">
+          <option value="savings">Savings</option>
+          <option value="investment">Investment</option>
+          <option value="emergency">Emergency Fund</option>
+          <option value="vacation">Vacation</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Amount</label>
+        <input type="number" name="target_amount" class="form-control" placeholder="50000" step="0.01" min="1" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Amount (optional)</label>
+        <input type="number" name="current_amount" class="form-control" placeholder="0" step="0.01" min="0" value="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Date (optional)</label>
+        <input type="date" name="target_date" class="form-control"/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Create Goal</button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Goal Modal -->
+<div class="modal-overlay" id="editGoalModal" onclick="closeModalOnOverlay(event,'editGoalModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Goal</span>
+      <button class="modal-close" onclick="closeModal('editGoalModal')">✕</button>
+    </div>
+    <form method="POST" id="editGoalForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label">Goal Name</label>
+        <input type="text" name="name" id="editGoalName" class="form-control" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Goal Type</label>
+        <select name="goal_type" id="editGoalType" class="form-control">
+          <option value="savings">Savings</option>
+          <option value="investment">Investment</option>
+          <option value="emergency">Emergency Fund</option>
+          <option value="vacation">Vacation</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Amount</label>
+        <input type="number" name="target_amount" id="editGoalTarget" class="form-control" step="0.01" min="1" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Amount</label>
+        <input type="number" name="current_amount" id="editGoalCurrent" class="form-control" step="0.01" min="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select name="status" id="editGoalStatus" class="form-control">
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="paused">Paused</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Date (optional)</label>
+        <input type="date" name="target_date" id="editGoalDate" class="form-control"/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Update Goal</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditGoal(id, name, type, target, current, status, date) {
+  document.getElementById('editGoalForm').action = `/goals/${id}/edit`;
+  document.getElementById('editGoalName').value = name;
+  document.getElementById('editGoalType').value = type;
+  document.getElementById('editGoalTarget').value = target;
+  document.getElementById('editGoalCurrent').value = current;
+  document.getElementById('editGoalStatus').value = status;
+  document.getElementById('editGoalDate').value = date;
+  openModal('editGoalModal');
+}
+</script>
+{% endblock %}

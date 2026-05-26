@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}AI Insights — Budget Buddy AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h1>AI Insights</h1>
+      <p class="subtitle">Smart recommendations based on your spending</p>
+    </div>
+    <button class="btn btn-primary" onclick="generateInsights()">
+      ✨ Generate New Insights
+    </button>
+  </div>
+</div>
+
+<div style="max-width:720px;" id="insightsContainer">
+  {% if insights %}
+    {% for insight in insights %}
+    <div class="insight-card {% if insight.insight_type == 'warning' %}danger{% elif insight.insight_type == 'prediction' %}warn{% endif %}"
+         style="margin-bottom:12px;border-radius:var(--radius);">
+      <div class="flex-between">
+        <div>
+          <span class="badge {% if insight.insight_type == 'warning' %}badge-pink{% elif insight.insight_type == 'prediction' %}badge-yellow{% else %}badge-mint{% endif %}"
+                style="margin-bottom:8px;">
+            {{ insight.insight_type }}
+          </span>
+          <div class="insight-title">{{ insight.title }}</div>
+          <div class="insight-msg">{{ insight.message }}</div>
+        </div>
+        <div style="text-align:right;font-size:0.75rem;color:var(--text-muted);white-space:nowrap;margin-left:16px;">
+          {{ insight.generated_at }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="card" style="text-align:center;padding:64px;">
+    <div style="font-size:3rem;margin-bottom:16px;">🤖</div>
+    <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">No insights yet</div>
+    <div style="color:var(--text-muted);font-size:0.875rem;margin-bottom:24px;">
+      Generate AI insights to get personalized financial recommendations.
+    </div>
+    <button class="btn btn-primary" onclick="generateInsights()">Generate Insights</button>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function generateInsights() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+
+  fetch('/ai/generate', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
+  }).then(r => r.json()).then(data => {
+    location.reload();
+  }).catch(() => {
+    btn.disabled = false;
+    btn.textContent = '✨ Generate New Insights';
+    alert('Failed to generate insights. Please try again.');
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — Budget Buddy AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container">
+    {% for category, message in messages %}
+    <div class="flash flash-{{ category }}" onclick="this.remove()">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <h1>💰 Budget Buddy AI</h1>
+      <p>Start your financial journey</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input type="text" name="full_name" class="form-control"
+               placeholder="John Doe" required autocomplete="name"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" name="email" class="form-control"
+               placeholder="you@example.com" required autocomplete="email"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control"
+               placeholder="At least 6 characters" required autocomplete="new-password"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirm password</label>
+        <input type="password" name="confirm_password" class="form-control"
+               placeholder="Repeat password" required autocomplete="new-password"/>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
+        Create Account
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

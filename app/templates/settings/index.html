@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Settings — Budget Buddy AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Settings</h1>
+  <p class="subtitle">Configure your budget and preferences</p>
+</div>
+
+<div style="max-width:600px;">
+  <form method="POST" action="{{ url_for('settings.update') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Profile -->
+    <div class="card mb-16">
+      <div class="card-title">Profile</div>
+      <div class="form-group mt-8">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="full_name" class="form-control"
+               value="{{ current_user.full_name }}" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" value="{{ current_user.email }}" disabled
+               style="opacity:0.5;cursor:not-allowed;"/>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Currency</label>
+          <select name="currency" class="form-control">
+            {% for code in ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD'] %}
+            <option value="{{ code }}" {% if current_user.currency == code %}selected{% endif %}>{{ code }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="city" class="form-control"
+                 value="{{ current_user.city or '' }}" placeholder="Your city"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget -->
+    <div class="card mb-16">
+      <div class="card-title">Monthly Budget Plan</div>
+      <div class="grid-2 mt-8">
+        <div class="form-group">
+          <label class="form-label">Monthly Budget ({{ current_user.currency }})</label>
+          <input type="number" name="monthly_budget" class="form-control"
+                 value="{{ settings.monthly_budget | int }}" min="0" step="100" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Savings Goal ({{ current_user.currency }})</label>
+          <input type="number" name="monthly_saving_goal" class="form-control"
+                 value="{{ settings.monthly_saving_goal | int }}" min="0" step="100" required/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card mb-24">
+      <div class="card-title">Notifications</div>
+      <div style="display:flex;flex-direction:column;gap:16px;margin-top:12px;">
+        <div class="flex-between">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500;">AI Overspending Alerts</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Get notified when you're close to your budget</div>
+          </div>
+          <input type="checkbox" name="ai_alerts_enabled" id="aiAlerts"
+                 {% if settings.ai_alerts_enabled %}checked{% endif %}
+                 style="accent-color:var(--mint);width:18px;height:18px;cursor:pointer;"/>
+        </div>
+        <div class="flex-between">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500;">Notifications</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">General app notifications</div>
+          </div>
+          <input type="checkbox" name="notifications_enabled" id="notifEnabled"
+                 {% if settings.notifications_enabled %}checked{% endif %}
+                 style="accent-color:var(--mint);width:18px;height:18px;cursor:pointer;"/>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="min-width:160px;">
+      Save Settings
+    </button>
+  </form>
+</div>
+{% endblock %}

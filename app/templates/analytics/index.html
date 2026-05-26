@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Analytics — Budget Buddy AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Analytics</h1>
+  <p class="subtitle">Spending insights for this month</p>
+</div>
+
+<div class="grid-main">
+  <div>
+    <!-- Category breakdown -->
+    <div class="card mb-16">
+      <div class="card-title">Category Breakdown</div>
+      <canvas id="trendChart" height="80" style="margin:16px 0;"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Category Details</div>
+      <div id="categoryBars" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card mb-16">
+      <div class="card-title">6-Month Trend</div>
+      <canvas id="trendLine" height="160" style="margin-top:12px;"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Fixed Costs</div>
+      <div id="fixedCosts" style="margin-top:8px;">
+        <div style="color:var(--text-muted);font-size:0.8rem;padding:12px 0;">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const currency = "{{ current_user.currency }}";
+
+fetch('/analytics/categories').then(r => r.json()).then(data => {
+  if (!data.length) return;
+
+  // Pie/bar
+  new Chart(document.getElementById('trendChart'), {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.category),
+      datasets: [{ data: data.map(d => d.amount), backgroundColor: data.map(d => d.color), borderWidth: 0, spacing: 2 }]
+    },
+    options: { cutout: '65%', plugins: { legend: { position: 'right', labels: { color: '#94A3B8', font: { size: 12 } } } } }
+  });
+
+  // Category bars
+  const container = document.getElementById('categoryBars');
+  container.innerHTML = data.map(d => `
+    <div style="margin-bottom:14px;">
+      <div class="flex-between" style="margin-bottom:5px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:${d.color};flex-shrink:0;"></span>
+          <span style="font-size:0.875rem;">${d.category}</span>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:0.875rem;font-weight:600;">${currency} ${d.amount.toLocaleString()}</span>
+          <span style="font-size:0.75rem;color:var(--text-muted);margin-left:6px;">${d.percentage}%</span>
+        </div>
+      </div>
+      <div class="progress-wrap" style="margin:0;">
+        <div class="progress-bar" style="width:${d.percentage}%;background:${d.color};"></div>
+      </div>
+    </div>
+  `).join('');
+});
+
+fetch('/analytics/trends').then(r => r.json()).then(data => {
+  new Chart(document.getElementById('trendLine'), {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.month),
+      datasets: [{
+        label: 'Total Spent',
+        data: data.map(d => d.total),
+        borderColor: '#5EF2D6',
+        backgroundColor: 'rgba(94,242,214,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#5EF2D6',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748B' }, grid: { color: '#1E293B' } },
+        y: { ticks: { color: '#64748B', callback: v => `${currency} ${v.toLocaleString()}` }, grid: { color: '#1E293B' } }
+      }
+    }
+  });
+});
+
+fetch('/analytics/fixed-costs').then(r => r.json()).then(data => {
+  const el = document.getElementById('fixedCosts');
+  if (!data.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px 0;">No recurring bills added yet.</div>'; return; }
+  el.innerHTML = data.map(d => `
+    <div class="flex-between" style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:0.875rem;font-weight:500;">${d.title}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">${d.category} · ${d.billing_cycle}</div>
+      </div>
+      <div style="font-weight:600;font-size:0.875rem;">${currency} ${d.amount.toLocaleString()}</div>
+    </div>
+  `).join('');
+});
+</script>
+{% endblock %}

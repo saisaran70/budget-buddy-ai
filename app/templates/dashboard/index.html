@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Budget Buddy AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h1>Your money today</h1>
+      <p class="subtitle">{{ summary.month_label }}</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addExpenseModal')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add Expense
+    </button>
+  </div>
+</div>
+
+<!-- Summary cards -->
+<div class="grid-4 mb-16">
+  <div class="card card-sm">
+    <div class="card-title">Monthly Budget</div>
+    <div class="card-value text-mint">{{ summary.currency }} {{ "{:,.0f}".format(summary.monthly_budget) }}</div>
+    <div class="card-sub">Total allocated</div>
+  </div>
+
+  <div class="card card-sm">
+    <div class="card-title">Total Spent</div>
+    <div class="card-value {% if summary.budget_used_pct > 90 %}text-pink{% elif summary.budget_used_pct > 70 %}text-yellow{% endif %}">
+      {{ summary.currency }} {{ "{:,.0f}".format(summary.total_spent) }}
+    </div>
+    <div class="card-sub">{{ summary.budget_used_pct }}% of budget used</div>
+    <div class="progress-wrap" style="margin-top:10px;">
+      <div class="progress-bar {% if summary.budget_used_pct > 90 %}danger{% elif summary.budget_used_pct > 70 %}warn{% endif %}"
+           style="width: {{ [summary.budget_used_pct, 100]|min }}%"></div>
+    </div>
+  </div>
+
+  <div class="card card-sm">
+    <div class="card-title">Remaining Balance</div>
+    <div class="card-value {% if summary.remaining < 0 %}text-pink{% else %}text-mint{% endif %}">
+      {{ summary.currency }} {{ "{:,.0f}".format(summary.remaining) }}
+    </div>
+    <div class="card-sub">After expenses</div>
+  </div>
+
+  <div class="card card-sm">
+    <div class="card-title">Savings Goal</div>
+    <div class="card-value text-blue">{{ summary.currency }} {{ "{:,.0f}".format(summary.saving_goal) }}</div>
+    <div class="card-sub">Monthly target</div>
+  </div>
+</div>
+
+<!-- Main grid -->
+<div class="grid-main">
+  <!-- Left column -->
+  <div>
+
+    <!-- Category pie chart -->
+    <div class="card mb-16">
+      <div class="flex-between mb-16">
+        <div class="card-title" style="margin:0">Spending by Category</div>
+        <a href="{{ url_for('analytics.index') }}" class="btn btn-outline btn-sm">View all</a>
+      </div>
+
+      {% if summary.category_breakdown %}
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;">
+        <canvas id="categoryPie" width="200" height="200"></canvas>
+        <div>
+          {% for item in summary.category_breakdown %}
+          <div class="flex-between" style="margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:10px;height:10px;border-radius:50%;background:{{ item.color }};flex-shrink:0;"></span>
+              <span style="font-size:0.85rem;">{{ item.category }}</span>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.85rem;font-weight:600;">{{ summary.currency }} {{ "{:,.0f}".format(item.amount) }}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">{{ item.percentage }}%</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:32px;color:var(--text-muted);">
+        No expenses this month yet. <a href="#" onclick="openModal('addExpenseModal')" style="color:var(--mint);">Add your first one.</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Recent expenses -->
+    <div class="card">
+      <div class="flex-between mb-16">
+        <div class="card-title" style="margin:0">Recent Expenses</div>
+        <a href="{{ url_for('expenses.index') }}" class="btn btn-outline btn-sm">View all</a>
+      </div>
+      {% if summary.recent_expenses %}
+        {% for e in summary.recent_expenses %}
+        <div class="expense-row">
+          <div class="expense-icon" style="background:{{ e.category_color }}20;">
+            <span>💳</span>
+          </div>
+          <div class="expense-info">
+            <div class="expense-name">{{ e.note or e.category }}</div>
+            <div class="expense-meta">{{ e.category }} · {{ e.date_display }}</div>
+          </div>
+          <div class="expense-amount text-pink">- {{ summary.currency }} {{ "{:,.0f}".format(e.amount) }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:0.875rem;">
+        No recent expenses.
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Right column -->
+  <div>
+
+    <!-- AI Insight -->
+    <div class="card mb-16">
+      <div class="card-title">AI Insights</div>
+      <div id="aiInsightArea" style="margin-top:8px;">
+        <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">
+          <button class="btn btn-outline btn-sm" onclick="generateInsights()">Generate AI insights</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goals summary -->
+    <div class="card">
+      <div class="flex-between mb-16">
+        <div class="card-title" style="margin:0">Goals</div>
+        <a href="{{ url_for('goals.index') }}" class="btn btn-outline btn-sm">Manage</a>
+      </div>
+      <div id="goalsSummary">
+        <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">
+          Loading goals...
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal-overlay" id="addExpenseModal" onclick="closeModalOnOverlay(event, 'addExpenseModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Expense</span>
+      <button class="modal-close" onclick="closeModal('addExpenseModal')">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('expenses.add') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label">Amount ({{ summary.currency }})</label>
+        <input type="number" name="amount" class="form-control"
+               placeholder="0.00" step="0.01" min="0.01" required autofocus/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select name="category_id" class="form-control" required>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note (optional)</label>
+        <input type="text" name="note" class="form-control" placeholder="What did you spend on?"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" name="expense_date" class="form-control"
+               value="{{ today }}" required/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Save Expense</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const categoryData = {{ summary.category_breakdown | tojson }};
+const currency = "{{ summary.currency }}";
+
+// Pie chart
+if (categoryData.length > 0) {
+  new Chart(document.getElementById('categoryPie'), {
+    type: 'doughnut',
+    data: {
+      labels: categoryData.map(d => d.category),
+      datasets: [{
+        data: categoryData.map(d => d.amount),
+        backgroundColor: categoryData.map(d => d.color),
+        borderWidth: 0,
+        spacing: 3,
+      }]
+    },
+    options: {
+      cutout: '70%',
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ` ${currency} ${ctx.parsed.toFixed(0)}` }
+      }},
+    }
+  });
+}
+
+// Load goals
+fetch('/goals/data').then(r => r.json()).then(goals => {
+  const el = document.getElementById('goalsSummary');
+  if (!goals.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">No goals yet. <a href="/goals" style="color:var(--mint);">Add one</a></div>';
+    return;
+  }
+  el.innerHTML = goals.slice(0,3).map(g => `
+    <div style="margin-bottom:16px;">
+      <div class="flex-between">
+        <span style="font-size:0.875rem;font-weight:500;">${g.name}</span>
+        <span style="font-size:0.8rem;color:var(--text-muted);">${g.progress_percent}%</span>
+      </div>
+      <div class="progress-wrap" style="margin:6px 0 4px;">
+        <div class="progress-bar" style="width:${g.progress_percent}%"></div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">
+        ${currency} ${g.current_amount.toLocaleString()} / ${currency} ${g.target_amount.toLocaleString()}
+      </div>
+    </div>
+  `).join('');
+});
+
+function generateInsights() {
+  const el = document.getElementById('aiInsightArea');
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">Generating insights...</div>';
+  fetch('/ai/generate', { method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token() }}'} })
+    .then(r => r.json())
+    .then(data => {
+      if (data.insights && data.insights.length) {
+        el.innerHTML = data.insights.map(i => `
+          <div class="insight-card ${i.type === 'warning' ? 'danger' : i.type === 'prediction' ? 'warn' : ''}">
+            <div class="insight-title">${i.title}</div>
+            <div class="insight-msg">${i.message}</div>
+          </div>
+        `).join('');
+      } else {
+        el.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:0.8rem;">No insights available.</div>';
+      }
+    }).catch(() => {
+      el.innerHTML = '<div style="padding:12px;color:var(--red);font-size:0.8rem;">Failed to generate insights.</div>';
+    });
+}
+
+// Set today's date in the modal
+document.querySelector('input[name="expense_date"]').value = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}
