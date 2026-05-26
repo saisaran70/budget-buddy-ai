@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(Get-Content \"c:\\\\Users\\\\saisa\\\\python practise\\\\budget-buddy-ai\\\\.claude\\\\settings.json\" | ConvertFrom-Json | Select-Object -ExpandProperty hooks | Select-Object -ExpandProperty Stop | ForEach-Object { $_.hooks } | Select-Object type, command, shell, timeout, statusMessage)",
-      "Bash(Get-Content \"c:\\\\Users\\\\saisa\\\\python practise\\\\budget-buddy-ai\\\\2026-05-26.md\" -Raw)"
-    ]
-  }
-}

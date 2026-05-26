@@ -142,4 +142,14 @@ updated: 2026-05-26
 
 ---
 
-*Last updated: 2026-05-26 | Total decisions logged: 13*
+## DEC-014 · Obsidian Graph View Structure
+**Date:** 2026-05-26
+**Decision:** Three-folder vault structure — root notes, `features/`, `models/` — with `home.md` as the central hub
+**Alternatives considered:** Flat structure (all notes in root), tag-based grouping only
+**Reason:** Subfolder paths (`features/auth`, `models/user`) create natural graph clusters in Obsidian. The hub-and-spoke pattern (all notes link back to `[[home]]`) ensures the graph is navigable, not just a hairball. Color-coded groups in `graph.json` visually distinguish features (blue), models (orange), and decisions (red).
+**Impact:** Any new feature must get a note in `features/`. Any new model must get a note in `models/`. Each note must include a top breadcrumb line with `[[home]]` to stay connected to the hub.
+**See:** [[home]] | [[architecture]] | [[roadmap]]
+
+---
+
+*Last updated: 2026-05-26 | Total decisions logged: 14*

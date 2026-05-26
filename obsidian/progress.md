@@ -120,6 +120,62 @@ updated: 2026-05-26
 
 ---
 
+## Session 2 — 2026-05-26
+
+**Status:** ✅ Obsidian knowledge graph built. All vault notes interconnected.
+
+### Summary
+Built a complete Obsidian knowledge graph for the Budget Buddy AI codebase. Created 24 interconnected Markdown notes with 272 `[[wikilinks]]` so the Obsidian Graph View shows meaningful clusters: features, models, and a core architecture hub. Updated existing [[decisions]] and [[progress]] notes with wikilinks throughout.
+
+### Completed tasks
+- Created `obsidian/home.md` — central hub node linking all other notes
+- Created `obsidian/architecture.md` — full system diagram, blueprint table, data flow, security layers
+- Created `obsidian/stack.md` — backend, frontend, DB, AI, design system, env vars
+- Created `obsidian/setup.md` — installation, config, project structure, common commands
+- Created `obsidian/database.md` — ERD, all table schemas, migration history, seed data
+- Created `obsidian/routes.md` — every HTTP endpoint with method, path, auth, description
+- Created `obsidian/services.md` — analytics_service and ai_service function signatures and shapes
+- Created `obsidian/roadmap.md` — completed phases + upcoming phases 8-12 with implementation plans
+- Created `obsidian/features/` — 8 feature notes (auth, dashboard, expenses, analytics, goals, ai-insights, settings, recurring-bills)
+- Created `obsidian/models/` — 6 model notes (user, expense, goal, settings, ai-insight, recurring)
+- Updated `obsidian/decisions.md` — added `[[wikilinks]]` to every decision's **See:** line
+- Updated `obsidian/progress.md` — added wikilinks throughout session log
+- Added `.obsidian/graph.json` — color-coded groups (features=blue, models=orange, decisions=red)
+
+### Files changed
+- `obsidian/home.md`
+- `obsidian/architecture.md`
+- `obsidian/stack.md`
+- `obsidian/setup.md`
+- `obsidian/database.md`
+- `obsidian/routes.md`
+- `obsidian/services.md`
+- `obsidian/roadmap.md`
+- `obsidian/features/auth.md`
+- `obsidian/features/dashboard.md`
+- `obsidian/features/expenses.md`
+- `obsidian/features/analytics.md`
+- `obsidian/features/goals.md`
+- `obsidian/features/ai-insights.md`
+- `obsidian/features/settings.md`
+- `obsidian/features/recurring-bills.md`
+- `obsidian/models/user.md`
+- `obsidian/models/expense.md`
+- `obsidian/models/goal.md`
+- `obsidian/models/settings.md`
+- `obsidian/models/ai-insight.md`
+- `obsidian/models/recurring.md`
+- `obsidian/decisions.md` (updated with wikilinks)
+- `obsidian/progress.md` (updated with wikilinks)
+- `obsidian/.obsidian/graph.json`
+
+### Next priorities
+- [ ] [[features/recurring-bills]] — UI + APScheduler cron job (Phase 8)
+- [ ] Phase 9 — Money Score widget
+- [ ] Phase 10 — Voice expense logging
+
+---
+
 ## Upcoming — Phase 8+ (Next session priorities)
 
 - [ ] [[features/recurring-bills]] — UI + APScheduler cron job
@@ -132,4 +188,4 @@ See [[roadmap]] for full plan.
 
 ---
 
-*Last updated: 2026-05-26 | Sessions logged: 1*
+*Last updated: 2026-05-26 | Sessions logged: 2*
