@@ -4,32 +4,44 @@
 {% block content %}
 <div class="page-header">
   <h1>Analytics</h1>
-  <p class="subtitle">Spending insights for this month</p>
+  <p class="subtitle">Spending breakdown for {{ now.strftime('%B %Y') if now else 'this month' }}</p>
 </div>
 
 <div class="grid-main">
   <div>
-    <!-- Category breakdown -->
+    <!-- Category donut -->
     <div class="card mb-16">
-      <div class="card-title">Category Breakdown</div>
-      <canvas id="trendChart" height="80" style="margin:16px 0;"></canvas>
+      <div class="section-title mb-8">SPENDING MIX</div>
+      <div style="font-size:1rem;font-weight:700;margin-bottom:16px;">Category Breakdown</div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="categoryDonut" width="260" height="260"></canvas>
+      </div>
     </div>
 
+    <!-- Category bars -->
     <div class="card">
-      <div class="card-title">Category Details</div>
-      <div id="categoryBars" style="margin-top:12px;"></div>
+      <div class="section-title mb-12">BY CATEGORY</div>
+      <div id="categoryBars">
+        <div class="skeleton" style="height:16px;margin-bottom:14px;"></div>
+        <div class="skeleton" style="height:16px;margin-bottom:14px;width:80%;"></div>
+        <div class="skeleton" style="height:16px;width:60%;"></div>
+      </div>
     </div>
   </div>
 
   <div>
+    <!-- 6-month trend -->
     <div class="card mb-16">
-      <div class="card-title">6-Month Trend</div>
-      <canvas id="trendLine" height="160" style="margin-top:12px;"></canvas>
+      <div class="section-title mb-8">SPENDING TREND</div>
+      <div style="font-size:1rem;font-weight:700;margin-bottom:16px;">6-Month History</div>
+      <canvas id="trendLine" height="170"></canvas>
     </div>
 
+    <!-- Fixed costs -->
     <div class="card">
-      <div class="card-title">Fixed Costs</div>
-      <div id="fixedCosts" style="margin-top:8px;">
+      <div class="section-title mb-8">RECURRING</div>
+      <div style="font-size:1rem;font-weight:700;margin-bottom:12px;">Fixed Costs</div>
+      <div id="fixedCosts">
         <div style="color:var(--text-muted);font-size:0.8rem;padding:12px 0;">Loading...</div>
       </div>
     </div>
@@ -41,32 +53,57 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const currency = "{{ current_user.currency }}";
+const chartDefaults = {
+  color: '#8896B3',
+  borderColor: '#243050',
+};
 
 fetch('/analytics/categories').then(r => r.json()).then(data => {
-  if (!data.length) return;
+  if (!data.length) {
+    document.getElementById('categoryBars').innerHTML =
+      '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:0.85rem;">No expenses this month.</div>';
+    return;
+  }
 
-  // Pie/bar
-  new Chart(document.getElementById('trendChart'), {
+  new Chart(document.getElementById('categoryDonut'), {
     type: 'doughnut',
     data: {
       labels: data.map(d => d.category),
-      datasets: [{ data: data.map(d => d.amount), backgroundColor: data.map(d => d.color), borderWidth: 0, spacing: 2 }]
+      datasets: [{
+        data: data.map(d => d.amount),
+        backgroundColor: data.map(d => d.color),
+        borderWidth: 0,
+        borderRadius: 3,
+        spacing: 3,
+      }]
     },
-    options: { cutout: '65%', plugins: { legend: { position: 'right', labels: { color: '#94A3B8', font: { size: 12 } } } } }
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#8896B3', font: { size: 12, family: 'Inter' }, padding: 16, boxWidth: 10 }
+        },
+        tooltip: {
+          backgroundColor: '#1A2540',
+          borderColor: '#243050',
+          borderWidth: 1,
+          callbacks: { label: ctx => `  ${currency} ${ctx.parsed.toLocaleString()} (${data[ctx.dataIndex].percentage}%)` }
+        }
+      }
+    }
   });
 
-  // Category bars
-  const container = document.getElementById('categoryBars');
-  container.innerHTML = data.map(d => `
-    <div style="margin-bottom:14px;">
-      <div class="flex-between" style="margin-bottom:5px;">
+  document.getElementById('categoryBars').innerHTML = data.map(d => `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:${d.color};flex-shrink:0;"></span>
-          <span style="font-size:0.875rem;">${d.category}</span>
+          <span style="width:8px;height:8px;border-radius:50%;background:${d.color};flex-shrink:0;"></span>
+          <span style="font-size:0.875rem;color:var(--text-primary);">${d.category}</span>
         </div>
         <div style="text-align:right;">
-          <span style="font-size:0.875rem;font-weight:600;">${currency} ${d.amount.toLocaleString()}</span>
-          <span style="font-size:0.75rem;color:var(--text-muted);margin-left:6px;">${d.percentage}%</span>
+          <span style="font-size:0.875rem;font-weight:700;">${currency} ${d.amount.toLocaleString()}</span>
+          <span style="font-size:0.72rem;color:var(--text-muted);margin-left:6px;">${d.percentage}%</span>
         </div>
       </div>
       <div class="progress-wrap" style="margin:0;">
@@ -84,19 +121,35 @@ fetch('/analytics/trends').then(r => r.json()).then(data => {
       datasets: [{
         label: 'Total Spent',
         data: data.map(d => d.total),
-        borderColor: '#5EF2D6',
-        backgroundColor: 'rgba(94,242,214,0.08)',
+        borderColor: '#4EEFC8',
+        backgroundColor: 'rgba(78,239,200,0.07)',
         fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#5EF2D6',
-        pointRadius: 4,
+        tension: 0.45,
+        pointBackgroundColor: '#4EEFC8',
+        pointBorderColor: '#1A2540',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
       }]
     },
     options: {
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1A2540',
+          borderColor: '#243050',
+          borderWidth: 1,
+          titleColor: '#F0F4FF',
+          bodyColor: '#8896B3',
+          callbacks: { label: ctx => `  ${currency} ${ctx.parsed.y.toLocaleString()}` }
+        }
+      },
       scales: {
-        x: { ticks: { color: '#64748B' }, grid: { color: '#1E293B' } },
-        y: { ticks: { color: '#64748B', callback: v => `${currency} ${v.toLocaleString()}` }, grid: { color: '#1E293B' } }
+        x: { ticks: { color: '#4E5D7A', font: { size: 11 } }, grid: { color: '#1E293B' } },
+        y: {
+          ticks: { color: '#4E5D7A', font: { size: 11 }, callback: v => `${currency} ${v.toLocaleString()}` },
+          grid: { color: '#1E293B' }
+        }
       }
     }
   });
@@ -104,16 +157,23 @@ fetch('/analytics/trends').then(r => r.json()).then(data => {
 
 fetch('/analytics/fixed-costs').then(r => r.json()).then(data => {
   const el = document.getElementById('fixedCosts');
-  if (!data.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px 0;">No recurring bills added yet.</div>'; return; }
-  el.innerHTML = data.map(d => `
-    <div class="flex-between" style="padding:10px 0;border-bottom:1px solid var(--border);">
-      <div>
-        <div style="font-size:0.875rem;font-weight:500;">${d.title}</div>
-        <div style="font-size:0.75rem;color:var(--text-muted);">${d.category} · ${d.billing_cycle}</div>
-      </div>
-      <div style="font-weight:600;font-size:0.875rem;">${currency} ${d.amount.toLocaleString()}</div>
+  if (!data.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px 0;">No recurring bills yet.</div>';
+    return;
+  }
+  const total = data.reduce((s, d) => s + d.amount, 0);
+  el.innerHTML = `
+    <div style="font-size:1.2rem;font-weight:800;color:var(--pink);margin-bottom:12px;">
+      ${currency} ${total.toLocaleString()} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">/ month</span>
     </div>
-  `).join('');
+    ${data.map(d => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+        <div>
+          <div style="font-size:0.875rem;font-weight:500;">${d.title}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);">${d.category} · ${d.billing_cycle}</div>
+        </div>
+        <div style="font-weight:700;font-size:0.875rem;">${currency} ${d.amount.toLocaleString()}</div>
+      </div>`).join('')}`;
 });
 </script>
 {% endblock %}

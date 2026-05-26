@@ -29,6 +29,17 @@ def generate():
     return jsonify({'insights': [i.to_dict() for i in new_insights]})
 
 
+@ai_bp.route('/insights/data')
+@login_required
+def insights_data():
+    all_insights = (AIInsight.query
+                    .filter_by(user_id=current_user.id)
+                    .order_by(AIInsight.generated_at.desc())
+                    .limit(10)
+                    .all())
+    return jsonify([i.to_dict() for i in all_insights])
+
+
 @ai_bp.route('/insights/<int:insight_id>/read', methods=['POST'])
 @login_required
 def mark_read(insight_id):

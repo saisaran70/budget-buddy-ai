@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register — Budget Buddy AI</title>
+  <meta name="theme-color" content="#0B1120"/>
+  <title>Create Account — Budget Buddy AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
 </head>
 <body>
@@ -12,7 +13,9 @@
   {% if messages %}
   <div class="flash-container">
     {% for category, message in messages %}
-    <div class="flash flash-{{ category }}" onclick="this.remove()">{{ message }}</div>
+    <div class="flash flash-{{ category }}" onclick="this.remove()">
+      <span>{{ message }}</span><span class="flash-close">✕</span>
+    </div>
     {% endfor %}
   </div>
   {% endif %}
@@ -21,8 +24,9 @@
 <div class="auth-page">
   <div class="auth-card">
     <div class="auth-logo">
-      <h1>💰 Budget Buddy AI</h1>
-      <p>Start your financial journey</p>
+      <div class="auth-logo-icon">💰</div>
+      <h1>Create account</h1>
+      <p>Start your financial journey today</p>
     </div>
 
     <form method="POST" action="{{ url_for('auth.register') }}">
@@ -31,7 +35,7 @@
       <div class="form-group">
         <label class="form-label">Full name</label>
         <input type="text" name="full_name" class="form-control"
-               placeholder="John Doe" required autocomplete="name"/>
+               placeholder="Your name" required autocomplete="name" autofocus/>
       </div>
 
       <div class="form-group">
@@ -42,8 +46,15 @@
 
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control"
-               placeholder="At least 6 characters" required autocomplete="new-password"/>
+        <div style="position:relative;">
+          <input type="password" name="password" id="regPwd" class="form-control"
+                 placeholder="At least 6 characters" required autocomplete="new-password"
+                 style="padding-right:44px;"/>
+          <button type="button" onclick="togglePwd('regPwd',this)"
+                  style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85rem;padding:4px;">
+            👁
+          </button>
+        </div>
       </div>
 
       <div class="form-group">
@@ -52,7 +63,7 @@
                placeholder="Repeat password" required autocomplete="new-password"/>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px;">
         Create Account
       </button>
     </form>
@@ -63,5 +74,13 @@
   </div>
 </div>
 
+<script>
+function togglePwd(id, btn) {
+  const input = document.getElementById(id);
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁' : '🙈';
+}
+document.querySelectorAll('.flash').forEach(el => setTimeout(() => el.remove(), 4000));
+</script>
 </body>
 </html>

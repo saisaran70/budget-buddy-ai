@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0B1120" />
   <title>{% block title %}Budget Buddy AI{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
   {% block head %}{% endblock %}
@@ -13,27 +14,45 @@
   {% if messages %}
   <div class="flash-container" id="flashContainer">
     {% for category, message in messages %}
-    <div class="flash flash-{{ category }}" onclick="this.remove()">{{ message }}</div>
+    <div class="flash flash-{{ category }}" onclick="this.remove()">
+      <span>{{ message }}</span>
+      <span class="flash-close">✕</span>
+    </div>
     {% endfor %}
   </div>
   {% endif %}
 {% endwith %}
+
+<!-- Mobile hamburger -->
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="3" y1="6" x2="21" y2="6"/>
+    <line x1="3" y1="12" x2="21" y2="12"/>
+    <line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
+
+<!-- Mobile overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <div class="app-layout">
 
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-text">💰 Budget Buddy</div>
-      <div class="logo-sub">AI-powered finance</div>
+      <div class="sidebar-logo-icon">💰</div>
+      <div class="sidebar-logo-text">
+        <div class="logo-name">Budget Buddy</div>
+        <div class="logo-sub">AI Finance</div>
+      </div>
     </div>
 
     <nav class="sidebar-nav">
       <a href="{{ url_for('dashboard.index') }}"
          class="nav-item {% if request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
         </svg>
         Dashboard
       </a>
@@ -81,12 +100,19 @@
     </nav>
 
     <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">{{ current_user.full_name[0].upper() }}</div>
+        <div class="sidebar-user-info">
+          <div class="user-name">{{ current_user.full_name }}</div>
+          <div class="user-email">{{ current_user.email }}</div>
+        </div>
+      </div>
       <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color:var(--text-muted)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
           <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
-        Logout
+        Sign out
       </a>
     </div>
   </aside>
@@ -102,8 +128,8 @@
 <nav class="bottom-nav">
   <a href="{{ url_for('dashboard.index') }}" class="bottom-nav-item {% if request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
     </svg>
     Home
   </a>
@@ -111,7 +137,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
-    Expenses
+    Add
   </a>
   <a href="{{ url_for('analytics.index') }}" class="bottom-nav-item {% if request.endpoint and 'analytics' in request.endpoint %}active{% endif %}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -125,6 +151,12 @@
       <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/>
     </svg>
     Goals
+  </a>
+  <a href="{{ url_for('ai.insights') }}" class="bottom-nav-item {% if request.endpoint and 'ai' in request.endpoint %}active{% endif %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2a9 9 0 0 1 9 9c0 3.6-2.1 6.7-5.1 8.2L15 21H9l-.9-1.8C5.1 17.7 3 14.6 3 11a9 9 0 0 1 9-9z"/>
+    </svg>
+    AI
   </a>
 </nav>
 

@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Goals — Budget Buddy AI{% endblock %}
 
+{% set type_emoji = {'savings':'💰','investment':'📈','emergency':'🛡️','vacation':'✈️'} %}
+{% set status_badge = {'active':'badge-blue','completed':'badge-mint','paused':'badge-yellow'} %}
+
 {% block content %}
 <div class="page-header">
   <div class="flex-between">
     <div>
       <h1>Financial Goals</h1>
-      <p class="subtitle">Track your savings and targets</p>
+      <p class="subtitle">{{ goals|length }} goal{{ 's' if goals|length != 1 else '' }} tracked</p>
     </div>
     <button class="btn btn-primary" onclick="openModal('addGoalModal')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
       New Goal
@@ -21,44 +24,53 @@
 <div class="grid-3">
   {% for g in goals %}
   <div class="card goal-card">
+    <span class="goal-emoji">{{ type_emoji.get(g.goal_type, '🎯') }}</span>
     <div class="goal-type-badge">{{ g.goal_type | upper }}</div>
-    <div style="font-size:1.1rem;font-weight:700;margin-bottom:4px;">{{ g.name }}</div>
-    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:16px;">
-      {% if g.target_date %}Target: {{ g.target_date.strftime('%d %b %Y') }}{% else %}No deadline{% endif %}
+    <div style="font-size:1rem;font-weight:700;margin-bottom:4px;color:var(--text-primary);">{{ g.name }}</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:16px;">
+      {% if g.target_date %}🗓 {{ g.target_date.strftime('%d %b %Y') }}{% else %}No deadline{% endif %}
     </div>
 
-    <div class="flex-between" style="margin-bottom:6px;">
-      <span style="font-size:0.8rem;color:var(--text-muted);">Progress</span>
-      <span style="font-size:0.9rem;font-weight:700;color:var(--mint);">{{ g.progress_percent }}%</span>
+    <div class="flex-between mb-8">
+      <span style="font-size:0.75rem;color:var(--text-muted);">Progress</span>
+      <span style="font-size:0.875rem;font-weight:700;color:
+        {% if g.progress_percent >= 100 %}var(--mint)
+        {% elif g.progress_percent >= 60 %}var(--blue)
+        {% else %}var(--text-secondary){% endif %};">
+        {{ g.progress_percent }}%
+      </span>
     </div>
-    <div class="progress-wrap">
-      <div class="progress-bar" style="width:{{ g.progress_percent }}%"></div>
+    <div class="progress-wrap" style="margin-bottom:14px;">
+      <div class="progress-bar {% if g.progress_percent >= 100 %}{% elif g.progress_percent < 30 %}warn{% endif %}"
+           style="width:{{ g.progress_percent }}%"></div>
     </div>
 
-    <div class="flex-between mt-16" style="font-size:0.8rem;">
+    <div class="flex-between mb-16" style="font-size:0.82rem;">
       <div>
-        <div style="color:var(--text-muted);">Saved</div>
-        <div style="font-weight:600;color:var(--mint);">{{ "{:,.0f}".format(g.current_amount) }}</div>
+        <div style="color:var(--text-muted);font-size:0.7rem;margin-bottom:2px;">Saved</div>
+        <div style="font-weight:700;color:var(--mint);">
+          {{ current_user.currency }} {{ "{:,.0f}".format(g.current_amount) }}
+        </div>
       </div>
       <div style="text-align:right;">
-        <div style="color:var(--text-muted);">Target</div>
-        <div style="font-weight:600;">{{ "{:,.0f}".format(g.target_amount) }}</div>
+        <div style="color:var(--text-muted);font-size:0.7rem;margin-bottom:2px;">Target</div>
+        <div style="font-weight:700;color:var(--text-primary);">
+          {{ current_user.currency }} {{ "{:,.0f}".format(g.target_amount) }}
+        </div>
       </div>
     </div>
 
-    <div class="flex-between mt-16" style="gap:8px;">
-      <span class="badge {% if g.status == 'completed' %}badge-mint{% elif g.status == 'paused' %}badge-yellow{% else %}badge-blue{% endif %}">
-        {{ g.status }}
-      </span>
+    <div class="flex-between gap-8">
+      <span class="badge {{ status_badge.get(g.status, 'badge-blue') }}">{{ g.status }}</span>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-outline btn-sm"
                 onclick="openEditGoal({{ g.id }}, '{{ g.name }}', '{{ g.goal_type }}', {{ g.target_amount }}, {{ g.current_amount }}, '{{ g.status }}', '{{ g.target_date.strftime('%Y-%m-%d') if g.target_date else '' }}')">
           Edit
         </button>
         <form method="POST" action="{{ url_for('goals.delete', goal_id=g.id) }}"
-              onsubmit="return confirm('Delete this goal?')" style="display:inline;">
+              onsubmit="return confirmDelete('Delete this goal?')" style="display:inline;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          <button type="submit" class="btn btn-danger btn-sm" data-no-load="true">Delete</button>
         </form>
       </div>
     </div>
@@ -67,13 +79,13 @@
 </div>
 
 {% else %}
-<div class="card" style="text-align:center;padding:64px;">
-  <div style="font-size:3rem;margin-bottom:16px;">🎯</div>
-  <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">No goals yet</div>
-  <div style="color:var(--text-muted);font-size:0.875rem;margin-bottom:24px;">
-    Set a savings or investment goal to start tracking your progress.
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-state-icon">🎯</span>
+    <div class="empty-state-title">No goals yet</div>
+    <div class="empty-state-text">Set a savings target and watch your progress grow.</div>
+    <button class="btn btn-primary" onclick="openModal('addGoalModal')">Create First Goal</button>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addGoalModal')">Create First Goal</button>
 </div>
 {% endif %}
 
@@ -93,19 +105,21 @@
       <div class="form-group">
         <label class="form-label">Goal Type</label>
         <select name="goal_type" class="form-control">
-          <option value="savings">Savings</option>
-          <option value="investment">Investment</option>
-          <option value="emergency">Emergency Fund</option>
-          <option value="vacation">Vacation</option>
+          <option value="savings">💰 Savings</option>
+          <option value="investment">📈 Investment</option>
+          <option value="emergency">🛡️ Emergency Fund</option>
+          <option value="vacation">✈️ Vacation</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Target Amount</label>
-        <input type="number" name="target_amount" class="form-control" placeholder="50000" step="0.01" min="1" required/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Current Amount (optional)</label>
-        <input type="number" name="current_amount" class="form-control" placeholder="0" step="0.01" min="0" value="0"/>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Target Amount ({{ current_user.currency }})</label>
+          <input type="number" name="target_amount" class="form-control" placeholder="50000" step="0.01" min="1" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Already Saved</label>
+          <input type="number" name="current_amount" class="form-control" placeholder="0" step="0.01" min="0" value="0"/>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Target Date (optional)</label>
@@ -132,19 +146,21 @@
       <div class="form-group">
         <label class="form-label">Goal Type</label>
         <select name="goal_type" id="editGoalType" class="form-control">
-          <option value="savings">Savings</option>
-          <option value="investment">Investment</option>
-          <option value="emergency">Emergency Fund</option>
-          <option value="vacation">Vacation</option>
+          <option value="savings">💰 Savings</option>
+          <option value="investment">📈 Investment</option>
+          <option value="emergency">🛡️ Emergency Fund</option>
+          <option value="vacation">✈️ Vacation</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Target Amount</label>
-        <input type="number" name="target_amount" id="editGoalTarget" class="form-control" step="0.01" min="1" required/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Current Amount</label>
-        <input type="number" name="current_amount" id="editGoalCurrent" class="form-control" step="0.01" min="0"/>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Target Amount</label>
+          <input type="number" name="target_amount" id="editGoalTarget" class="form-control" step="0.01" min="1" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount Saved</label>
+          <input type="number" name="current_amount" id="editGoalCurrent" class="form-control" step="0.01" min="0"/>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Status</label>

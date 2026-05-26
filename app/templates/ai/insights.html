@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}AI Insights — Budget Buddy AI{% endblock %}
 
+{% set type_config = {
+  'warning':    {'class':'warn',   'badge':'badge-yellow', 'icon':'⚠️'},
+  'danger':     {'class':'danger', 'badge':'badge-pink',   'icon':'🚨'},
+  'suggestion': {'class':'tip',    'badge':'badge-blue',   'icon':'💡'},
+  'tip':        {'class':'tip',    'badge':'badge-blue',   'icon':'💡'},
+  'saving':     {'class':'',       'badge':'badge-mint',   'icon':'💰'},
+  'prediction': {'class':'warn',   'badge':'badge-yellow', 'icon':'🔮'},
+} %}
+
 {% block content %}
 <div class="page-header">
   <div class="flex-between">
@@ -8,40 +17,38 @@
       <h1>AI Insights</h1>
       <p class="subtitle">Smart recommendations based on your spending</p>
     </div>
-    <button class="btn btn-primary" onclick="generateInsights()">
+    <button class="btn btn-primary" id="generateBtn" onclick="generateInsights()">
       ✨ Generate New Insights
     </button>
   </div>
 </div>
 
-<div style="max-width:720px;" id="insightsContainer">
+<div style="max-width:700px;" id="insightsContainer">
   {% if insights %}
     {% for insight in insights %}
-    <div class="insight-card {% if insight.insight_type == 'warning' %}danger{% elif insight.insight_type == 'prediction' %}warn{% endif %}"
-         style="margin-bottom:12px;border-radius:var(--radius);">
-      <div class="flex-between">
-        <div>
-          <span class="badge {% if insight.insight_type == 'warning' %}badge-pink{% elif insight.insight_type == 'prediction' %}badge-yellow{% else %}badge-mint{% endif %}"
-                style="margin-bottom:8px;">
-            {{ insight.insight_type }}
-          </span>
-          <div class="insight-title">{{ insight.title }}</div>
-          <div class="insight-msg">{{ insight.message }}</div>
+    {% set cfg = type_config.get(insight.insight_type, {'class':'','badge':'badge-mint','icon':'💡'}) %}
+    <div class="insight-card {{ cfg.class }}" style="margin-bottom:12px;border-radius:var(--radius-lg);">
+      <div class="flex-between mb-8">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span>{{ cfg.icon }}</span>
+          <span class="badge {{ cfg.badge }}">{{ insight.insight_type }}</span>
         </div>
-        <div style="text-align:right;font-size:0.75rem;color:var(--text-muted);white-space:nowrap;margin-left:16px;">
-          {{ insight.generated_at }}
-        </div>
+        <span style="font-size:0.72rem;color:var(--text-muted);">{{ insight.generated_at }}</span>
       </div>
+      <div class="insight-title">{{ insight.title }}</div>
+      <div class="insight-msg">{{ insight.message }}</div>
     </div>
     {% endfor %}
   {% else %}
-  <div class="card" style="text-align:center;padding:64px;">
-    <div style="font-size:3rem;margin-bottom:16px;">🤖</div>
-    <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">No insights yet</div>
-    <div style="color:var(--text-muted);font-size:0.875rem;margin-bottom:24px;">
-      Generate AI insights to get personalized financial recommendations.
+  <div class="card">
+    <div class="empty-state">
+      <span class="empty-state-icon">🤖</span>
+      <div class="empty-state-title">No insights yet</div>
+      <div class="empty-state-text">
+        Generate AI-powered insights to get personalized financial recommendations based on your spending patterns.
+      </div>
+      <button class="btn btn-primary" onclick="generateInsights()">✨ Generate Insights</button>
     </div>
-    <button class="btn btn-primary" onclick="generateInsights()">Generate Insights</button>
   </div>
   {% endif %}
 </div>
@@ -50,9 +57,10 @@
 {% block scripts %}
 <script>
 function generateInsights() {
-  const btn = event.target;
+  const btn = document.getElementById('generateBtn');
+  const orig = btn.innerHTML;
   btn.disabled = true;
-  btn.textContent = 'Generating...';
+  btn.innerHTML = '<span class="spinner" style="border-color:rgba(11,17,32,0.3);border-top-color:#0B1120;"></span> Generating...';
 
   fetch('/ai/generate', {
     method: 'POST',
@@ -61,8 +69,13 @@ function generateInsights() {
     location.reload();
   }).catch(() => {
     btn.disabled = false;
-    btn.textContent = '✨ Generate New Insights';
-    alert('Failed to generate insights. Please try again.');
+    btn.innerHTML = orig;
+    const container = document.getElementById('insightsContainer');
+    const err = document.createElement('div');
+    err.className = 'insight-card danger';
+    err.style.cssText = 'margin-bottom:12px;border-radius:var(--radius-lg);';
+    err.innerHTML = '<div class="insight-title">Generation failed</div><div class="insight-msg">Could not reach the AI service. Check your API key in Settings or try again.</div>';
+    container.prepend(err);
   });
 }
 </script>

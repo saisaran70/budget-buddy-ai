@@ -1,3 +1,4 @@
+from datetime import date
 from flask import Blueprint, render_template, jsonify
 from flask_login import login_required, current_user
 from app.services.analytics_service import (
@@ -11,7 +12,7 @@ analytics_bp = Blueprint('analytics', __name__, url_prefix='/analytics')
 @login_required
 def index():
     breakdown = get_category_breakdown(current_user)
-    return render_template('analytics/index.html', breakdown=breakdown)
+    return render_template('analytics/index.html', breakdown=breakdown, now=date.today())
 
 
 @analytics_bp.route('/categories')

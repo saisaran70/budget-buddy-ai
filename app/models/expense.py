@@ -47,12 +47,20 @@ class Expense(db.Model):
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
 
+    _ICON_EMOJI = {
+        'utensils': '🍽️', 'car': '🚗', 'shopping-bag': '🛍️',
+        'receipt': '⚡', 'film': '🎬', 'heart': '💊',
+        'book': '📚', 'circle': '📦',
+    }
+
     def to_dict(self):
+        icon_name = self.category.icon if self.category else 'circle'
         return {
             'id': self.id,
             'amount': float(self.amount),
-            'category': self.category.name,
-            'category_color': self.category.color,
+            'category': self.category.name if self.category else 'Other',
+            'category_color': self.category.color if self.category else '#94A3B8',
+            'category_icon': self._ICON_EMOJI.get(icon_name, '📦'),
             'note': self.note or '',
             'date': self.expense_date.strftime('%Y-%m-%d'),
             'date_display': self.expense_date.strftime('%d %b %Y'),
