@@ -221,5 +221,17 @@ __marimo__/
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 
+# Obsidian canvas files and daily notes in project root
+*.canvas
+[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].md
+
+# Reference / design images
+ref img/
+ref_img/
+
+# Stale Obsidian vault copies (should never be committed inside subdirs)
+migrations/obsidian/
+obsidian/
+
 # Claude Code local settings (machine-specific paths)
 .claude/settings.local.json
