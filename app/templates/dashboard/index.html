@@ -10,19 +10,18 @@
     <h1 style="font-size:2rem;">Your money today</h1>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
-    <button class="btn btn-primary btn-sm" onclick="openModal('addExpenseModal')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-      Add Expense
-    </button>
+
+    <!-- Money Score box -->
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;text-align:center;min-width:76px;">
+      <div id="moneyScoreVal" style="font-size:1.5rem;font-weight:800;color:var(--mint);line-height:1.1;">—</div>
+      <div style="font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:3px;">Money Score</div>
+    </div>
+
   </div>
 </div>
 
-<!-- ROW 1: Spending hero + AI insight -->
-<div style="display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px;" class="hero-row-grid">
-
-  <!-- Spending hero card -->
+<!-- ROW 1: Spending hero (full width) -->
+<div class="mb-16">
   <div class="hero-card">
     <div class="hero-label">{{ summary.month_label | upper }} SPENDING</div>
     <div class="hero-amount-row">
@@ -57,25 +56,10 @@
     </div>
     {% endif %}
   </div>
-
-  <!-- AI Insight card -->
-  <div class="card" style="background:linear-gradient(135deg,var(--card-bg) 0%,#1A1F35 100%);position:relative;overflow:hidden;">
-    <div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:radial-gradient(circle,rgba(248,122,150,0.08) 0%,transparent 70%);pointer-events:none;"></div>
-    <div class="card-title">AI INSIGHT</div>
-    <div id="dashAiInsight">
-      <div style="text-align:center;padding:20px 0;">
-        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">No insights yet</div>
-        <button class="btn btn-outline btn-sm" onclick="generateDashInsight()">
-          ✨ Generate
-        </button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <!-- ROW 2: Stat pills -->
-<div class="stat-pills mb-20">
+<div class="stat-pills mb-16">
   <div class="stat-pill">
     <div class="stat-pill-icon mint">💰</div>
     <div>
@@ -91,31 +75,67 @@
   </div>
 
   <div class="stat-pill">
-    <div class="stat-pill-icon blue">🎯</div>
+    <div class="stat-pill-icon blue">📈</div>
     <div>
-      <div class="stat-pill-label">Active Goals</div>
-      <div class="stat-pill-value" id="activeGoalsCount">—</div>
+      <div class="stat-pill-label">Investing Goal</div>
+      <div class="stat-pill-value">
+        {% if summary.investing_goal > 0 %}
+          {{ summary.currency }} {{ "{:,.0f}".format(summary.investing_goal) }}
+        {% else %}
+          <span style="color:var(--text-muted);font-size:0.8rem;">Not set</span>
+        {% endif %}
+      </div>
     </div>
   </div>
 
   <div class="stat-pill">
     <div class="stat-pill-icon yellow">📊</div>
     <div>
-      <div class="stat-pill-label">vs Last Month</div>
+      <div class="stat-pill-label" id="monthComparisonLabel">vs Last Month</div>
       <div class="stat-pill-value" id="monthComparison">—</div>
     </div>
   </div>
 
   <div class="stat-pill">
-    <div class="stat-pill-icon pink">🧾</div>
+    <div class="stat-pill-icon pink">🎯</div>
     <div>
-      <div class="stat-pill-label">Transactions</div>
-      <div class="stat-pill-value">{{ summary.recent_expenses | length }}+</div>
+      <div class="stat-pill-label">Active Goals</div>
+      <div class="stat-pill-value" id="activeGoalsCount">—</div>
     </div>
   </div>
 </div>
 
-<!-- ROW 3: Category pie chart (full width) -->
+<!-- Budget Allocation Row -->
+{% if summary.monthly_budget > 0 %}
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+  {% set committed = summary.saving_goal + summary.investing_goal + summary.fixed_cost_monthly %}
+  {% set free = summary.monthly_budget - committed %}
+  <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--mint-dim);border-radius:20px;font-size:0.75rem;">
+    <span style="color:var(--mint);">💰</span>
+    <span style="color:var(--text-muted);">Savings</span>
+    <span style="font-weight:700;color:var(--mint);">{{ summary.currency }} {{ "{:,.0f}".format(summary.saving_goal) }}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-dim);border-radius:20px;font-size:0.75rem;">
+    <span style="color:var(--blue);">📈</span>
+    <span style="color:var(--text-muted);">Investing</span>
+    <span style="font-weight:700;color:var(--blue);">{{ summary.currency }} {{ "{:,.0f}".format(summary.investing_goal) }}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--yellow-dim);border-radius:20px;font-size:0.75rem;">
+    <span style="color:var(--yellow);">📋</span>
+    <span style="color:var(--text-muted);">Fixed Costs</span>
+    <span style="font-weight:700;color:var(--yellow);">{{ summary.currency }} {{ "{:,.0f}".format(summary.fixed_cost_monthly) }}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-tertiary);border-radius:20px;font-size:0.75rem;border:1px solid var(--border);">
+    <span>🆓</span>
+    <span style="color:var(--text-muted);">Free to Spend</span>
+    <span style="font-weight:700;color:{% if free < 0 %}var(--pink){% else %}var(--text-primary){% endif %};">
+      {{ summary.currency }} {{ "{:,.0f}".format([free, 0]|max) }}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+<!-- ROW 3: Category pie chart -->
 <div class="card mb-16">
   <div class="flex-between mb-16">
     <div>
@@ -126,28 +146,30 @@
   </div>
 
   {% if summary.category_breakdown %}
-  <div style="display:grid;grid-template-columns:240px 1fr;gap:32px;align-items:center;">
+  <div style="display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:center;">
+    <!-- Donut -->
     <div style="position:relative;">
-      <canvas id="categoryPie" width="240" height="240"></canvas>
+      <canvas id="categoryPie" width="220" height="220"></canvas>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
-        <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Total</div>
-        <div style="font-size:1.1rem;font-weight:800;color:var(--text-primary);">
+        <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Total</div>
+        <div style="font-size:1rem;font-weight:800;color:var(--text-primary);">
           {{ summary.currency }} {{ "{:,.0f}".format(summary.total_spent) }}
         </div>
       </div>
     </div>
-    <div>
+    <!-- Category list — bordered cards -->
+    <div style="display:flex;flex-direction:column;gap:8px;">
       {% for item in summary.category_breakdown %}
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(26,37,64,0.7);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:{{ item.color }};flex-shrink:0;"></span>
-          <span style="font-size:0.875rem;color:var(--text-primary);">{{ item.category }}</span>
+          <span style="width:9px;height:9px;border-radius:50%;background:{{ item.color }};flex-shrink:0;box-shadow:0 0 6px {{ item.color }}66;"></span>
+          <span style="font-size:0.875rem;color:var(--text-primary);font-weight:500;">{{ item.category }}</span>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:0.875rem;font-weight:700;color:var(--text-primary);">
+          <div style="font-size:0.85rem;font-weight:700;color:var(--text-primary);">
             {{ summary.currency }} {{ "{:,.0f}".format(item.amount) }}
           </div>
-          <div style="font-size:0.7rem;color:var(--text-muted);">{{ item.percentage }}%</div>
+          <div style="font-size:0.68rem;color:var(--text-muted);">{{ item.percentage }}%</div>
         </div>
       </div>
       {% endfor %}
@@ -163,37 +185,31 @@
   {% endif %}
 </div>
 
-<!-- ROW 4: Recent expenses -->
-<div class="card">
-  <div class="flex-between mb-16">
+<!-- ROW 4: AI Insights (3 cards) -->
+<div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
     <div>
-      <div class="section-title">RECENT ACTIVITY</div>
-      <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-top:2px;">Latest transactions</div>
+      <div class="section-title">AI ANALYSIS</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-top:2px;">Latest insights</div>
     </div>
-    <a href="{{ url_for('expenses.index') }}" class="btn btn-outline btn-sm">View all</a>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm" onclick="refreshInsights()">✨ Regenerate</button>
+      <a href="{{ url_for('ai.insights') }}" class="btn btn-outline btn-sm">See all</a>
+    </div>
   </div>
 
-  {% if summary.recent_expenses %}
-    {% for e in summary.recent_expenses %}
-    <div class="expense-row">
-      <div class="expense-icon" style="background:{{ e.category_color }}20;font-size:1.1rem;">
-        {{ e.category_icon }}
-      </div>
-      <div class="expense-info">
-        <div class="expense-name">{{ e.note or e.category }}</div>
-        <div class="expense-meta">{{ e.category }} · {{ e.date_display }}</div>
-      </div>
-      <div class="expense-amount">− {{ summary.currency }} {{ "{:,.0f}".format(e.amount) }}</div>
+  <div id="aiInsightsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+    <!-- filled by JS -->
+    <div class="card" style="opacity:0.5;text-align:center;padding:28px 16px;">
+      <div style="font-size:0.75rem;color:var(--text-muted);">Loading insights…</div>
     </div>
-    {% endfor %}
-  {% else %}
-  <div class="empty-state" style="padding:28px 0;">
-    <span class="empty-state-icon">💸</span>
-    <div class="empty-state-title">No expenses yet</div>
-    <div class="empty-state-text">Start tracking your spending.</div>
-    <button class="btn btn-primary btn-sm" onclick="openModal('addExpenseModal')">Add your first</button>
+    <div class="card" style="opacity:0.5;text-align:center;padding:28px 16px;">
+      <div style="font-size:0.75rem;color:var(--text-muted);">Loading insights…</div>
+    </div>
+    <div class="card" style="opacity:0.5;text-align:center;padding:28px 16px;">
+      <div style="font-size:0.75rem;color:var(--text-muted);">Loading insights…</div>
+    </div>
   </div>
-  {% endif %}
 </div>
 
 <!-- Add Expense Modal -->
@@ -238,18 +254,62 @@
 <script>
 const categoryData = {{ summary.category_breakdown | tojson }};
 const currency = "{{ summary.currency }}";
+const budgetUsedPct = {{ summary.budget_used_pct }};
+const totalSpent = {{ summary.total_spent }};
+const monthlyBudget = {{ summary.monthly_budget }};
+const savingGoal = {{ summary.saving_goal }};
+const investingGoal = {{ summary.investing_goal }};
+const fixedCostMonthly = {{ summary.fixed_cost_monthly }};
 
-// Set date label
+// ── Date label ──────────────────────────────────────────────
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const now = new Date();
 document.getElementById('dateLabel').textContent =
   days[now.getDay()].toUpperCase() + ', ' + months[now.getMonth()].toUpperCase() + ' ' + now.getDate();
 
-// Set today's date in modal
+// ── Set today's date in modal ────────────────────────────────
 document.getElementById('dashAddDate').value = now.toISOString().split('T')[0];
 
-// Category donut chart
+// ── Money Score ──────────────────────────────────────────────
+(function computeMoneyScore() {
+  let score = 50;
+
+  if (monthlyBudget > 0) {
+    // Budget adherence (0–70 pts)
+    if (budgetUsedPct <= 60)       score = 70;
+    else if (budgetUsedPct <= 80)  score = 58;
+    else if (budgetUsedPct <= 100) score = 45 + Math.round((100 - budgetUsedPct) / 2);
+    else                           score = Math.max(5, 35 - Math.round((budgetUsedPct - 100)));
+
+    // Savings goal set (+10)
+    if (savingGoal > 0) score += 10;
+
+    // Investing goal set (+10)
+    if (investingGoal > 0) score += 10;
+
+    // Fixed costs under 40% of budget (+5 bonus, penalty if over 60%)
+    if (monthlyBudget > 0) {
+      const fcPct = fixedCostMonthly / monthlyBudget * 100;
+      if (fcPct <= 40) score += 5;
+      else if (fcPct > 60) score -= 5;
+    }
+  } else {
+    score = totalSpent > 0 ? 50 : 55;
+    if (savingGoal > 0)    score += 8;
+    if (investingGoal > 0) score += 8;
+  }
+
+  score = Math.min(99, Math.max(5, score));
+
+  const el = document.getElementById('moneyScoreVal');
+  el.textContent = score;
+  if (score >= 75)      el.style.color = 'var(--mint)';
+  else if (score >= 50) el.style.color = 'var(--yellow)';
+  else                  el.style.color = 'var(--pink)';
+})();
+
+// ── Category donut chart ─────────────────────────────────────
 if (categoryData.length > 0) {
   new Chart(document.getElementById('categoryPie'), {
     type: 'doughnut',
@@ -280,94 +340,112 @@ if (categoryData.length > 0) {
   });
 }
 
-// Load goals count
+// ── Active goals count ───────────────────────────────────────
 fetch('/goals/data').then(r => r.json()).then(goals => {
   const active = goals.filter(g => g.status === 'active').length;
   document.getElementById('activeGoalsCount').textContent = active || '0';
-});
+}).catch(() => {});
 
-// Month comparison
+// ── vs Last Month ────────────────────────────────────────────
 fetch('/analytics/trends').then(r => r.json()).then(data => {
-  if (data.length >= 2) {
-    const curr = data[data.length - 1].total;
-    const prev = data[data.length - 2].total;
-    const el = document.getElementById('monthComparison');
-    if (prev > 0) {
-      const pct = Math.abs(Math.round((curr - prev) / prev * 100));
-      if (curr < prev) {
-        el.textContent = pct + '% lower';
-        el.style.color = 'var(--mint)';
-      } else if (curr > prev) {
-        el.textContent = pct + '% higher';
-        el.style.color = 'var(--pink)';
-      } else {
-        el.textContent = 'Same as last';
-      }
-    } else {
-      el.textContent = 'First month';
-    }
-  }
-});
+  const val   = document.getElementById('monthComparison');
+  const label = document.getElementById('monthComparisonLabel');
+  if (data.length < 2) return;
 
-// Load AI insight for dashboard
-function loadDashInsight() {
-  fetch('/ai/insights/data').then(r => {
-    if (!r.ok) throw new Error();
-    return r.json();
-  }).then(insights => {
-    const el = document.getElementById('dashAiInsight');
-    if (insights && insights.length > 0) {
-      const i = insights[0];
-      const colors = { warning:'var(--yellow)', danger:'var(--pink)', tip:'var(--blue)', suggestion:'var(--blue)', saving:'var(--mint)', prediction:'var(--yellow)' };
-      const color = colors[i.type] || 'var(--mint)';
-      el.innerHTML = `
-        <div style="font-size:0.85rem;font-weight:700;color:${color};margin-bottom:6px;">${i.title}</div>
-        <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.6;">${i.message}</div>
-        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-          <span>${i.generated_at}</span>
-          <a href="/ai/insights" style="color:var(--mint);text-decoration:none;font-weight:500;">See all →</a>
-        </div>`;
-    } else {
-      el.innerHTML = `
-        <div style="text-align:center;padding:16px 0;">
-          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">No insights yet</div>
-          <button class="btn btn-outline btn-sm" onclick="generateDashInsight()">✨ Generate</button>
-        </div>`;
-    }
-  }).catch(() => {});
+  const curr = data[data.length - 1].total;
+
+  // Scan backwards to find the most recent month that has actual data
+  let prevIdx = -1;
+  for (let i = data.length - 2; i >= 0; i--) {
+    if (data[i].total > 0) { prevIdx = i; break; }
+  }
+
+  if (prevIdx === -1) {
+    // No prior month has any data at all
+    label.textContent = 'vs Last Month';
+    val.textContent   = '—';
+    return;
+  }
+
+  const prev          = data[prevIdx].total;
+  const prevMonthName = data[prevIdx].month.split(' ')[0]; // e.g. "Apr"
+  const pct           = Math.abs(Math.round((curr - prev) / prev * 100));
+
+  if (curr < prev) {
+    val.textContent   = pct + '%';
+    val.style.color   = 'var(--mint)';
+    label.textContent = 'Lower Than ' + prevMonthName;
+  } else if (curr > prev) {
+    val.textContent   = pct + '%';
+    val.style.color   = 'var(--pink)';
+    label.textContent = 'Higher Than ' + prevMonthName;
+  } else {
+    val.textContent   = '0%';
+    label.textContent = 'Same as ' + prevMonthName;
+  }
+}).catch(() => {});
+
+// ── AI Insights grid (3 cards) ──────────────────────────────
+const insightColors = {
+  warning:'var(--yellow)', danger:'var(--pink)', tip:'var(--blue)',
+  suggestion:'var(--blue)', saving:'var(--mint)', prediction:'var(--yellow)'
+};
+const insightIcons = {
+  warning:'⚠️', danger:'🚨', tip:'💡', suggestion:'💡', saving:'💰', prediction:'📈'
+};
+function renderInsightsGrid(insights) {
+  const grid = document.getElementById('aiInsightsGrid');
+  if (!insights || insights.length === 0) {
+    grid.innerHTML = `
+      <div class="card" style="grid-column:1/-1;text-align:center;padding:32px 16px;">
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:14px;">No insights yet. Generate your first AI analysis.</div>
+        <button class="btn btn-primary btn-sm" onclick="refreshInsights()">✨ Generate Insights</button>
+      </div>`;
+    return;
+  }
+  const cards = insights.slice(0, 3).map(i => {
+    const color = insightColors[i.type] || 'var(--mint)';
+    const icon  = insightIcons[i.type] || '✨';
+    const typeBg = {
+      warning:'rgba(247,209,84,0.08)', danger:'rgba(248,122,150,0.08)',
+      tip:'rgba(91,168,255,0.08)', suggestion:'rgba(91,168,255,0.08)',
+      saving:'rgba(78,239,200,0.08)', prediction:'rgba(247,209,84,0.08)'
+    }[i.type] || 'rgba(78,239,200,0.08)';
+    return `
+      <div class="card" style="border-color:${color}22;background:linear-gradient(135deg,var(--card-bg) 0%,${typeBg} 100%);">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+          <span style="font-size:1rem;">${icon}</span>
+          <span style="font-size:0.6rem;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.8px;">${i.type}</span>
+        </div>
+        <div style="font-size:0.875rem;font-weight:700;color:var(--text-primary);margin-bottom:7px;line-height:1.3;">${i.title}</div>
+        <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.6;flex:1;">${i.message}</div>
+        <div style="font-size:0.62rem;color:var(--text-muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border-soft);">${i.generated_at}</div>
+      </div>`;
+  });
+  // pad to 3 if fewer insights
+  while (cards.length < 3) {
+    cards.push(`<div class="card" style="opacity:0.3;display:flex;align-items:center;justify-content:center;min-height:140px;">
+      <div style="font-size:0.72rem;color:var(--text-muted);">—</div></div>`);
+  }
+  grid.innerHTML = cards.join('');
 }
 
-function generateDashInsight() {
-  const el = document.getElementById('dashAiInsight');
-  el.innerHTML = '<div style="text-align:center;padding:20px 0;font-size:0.78rem;color:var(--text-muted);">Generating<span id="dots">...</span></div>';
-  let dots = 0;
-  const dotInterval = setInterval(() => {
-    dots = (dots + 1) % 4;
-    const el2 = document.getElementById('dots');
-    if (el2) el2.textContent = '.'.repeat(dots + 1);
-  }, 400);
-
-  fetch('/ai/generate', { method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token() }}'} })
+function refreshInsights() {
+  const grid = document.getElementById('aiInsightsGrid');
+  grid.innerHTML = `
+    <div class="card" style="grid-column:1/-1;text-align:center;padding:28px;opacity:0.6;">
+      <div style="font-size:0.75rem;color:var(--text-muted);">Generating new insights…</div>
+    </div>`;
+  fetch('/ai/generate', { method:'POST', headers:{'X-CSRFToken':'{{ csrf_token() }}'} })
     .then(r => r.json())
     .then(data => {
-      clearInterval(dotInterval);
-      if (data.insights && data.insights.length) {
-        const i = data.insights[0];
-        const colors = { warning:'var(--yellow)', danger:'var(--pink)', tip:'var(--blue)', suggestion:'var(--blue)', saving:'var(--mint)', prediction:'var(--yellow)' };
-        const color = colors[i.type] || 'var(--mint)';
-        el.innerHTML = `
-          <div style="font-size:0.85rem;font-weight:700;color:${color};margin-bottom:6px;">${i.title}</div>
-          <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.6;">${i.message}</div>
-          <div style="font-size:0.68rem;color:var(--text-muted);margin-top:10px;text-align:right;">
-            <a href="/ai/insights" style="color:var(--mint);text-decoration:none;font-weight:500;">See all →</a>
-          </div>`;
-      }
+      if (data.insights) renderInsightsGrid(data.insights);
     }).catch(() => {
-      clearInterval(dotInterval);
-      el.innerHTML = '<div style="font-size:0.78rem;color:var(--text-muted);padding:8px 0;">Could not load insights.</div>';
+      grid.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;padding:28px;"><div style="font-size:0.75rem;color:var(--text-muted);">Could not generate insights.</div></div>`;
     });
 }
 
-loadDashInsight();
+// Load on page load
+fetch('/ai/insights/data').then(r => r.json()).then(renderInsightsGrid).catch(() => renderInsightsGrid([]));
 </script>
 {% endblock %}

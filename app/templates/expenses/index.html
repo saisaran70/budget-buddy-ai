@@ -22,12 +22,40 @@
 </div>
 
 <!-- Filter tabs -->
-<div class="flex-between mb-20" style="flex-wrap:wrap;gap:10px;">
+<div class="mb-20" style="display:flex;flex-direction:column;gap:10px;">
   <div class="filter-tabs">
-    <a href="?period=3m" class="filter-tab {% if period=='3m' %}active{% endif %}">3 Months</a>
-    <a href="?period=6m" class="filter-tab {% if period=='6m' %}active{% endif %}">6 Months</a>
-    <a href="?period=1y" class="filter-tab {% if period=='1y' %}active{% endif %}">1 Year</a>
+    <a href="?period=3m"  class="filter-tab {% if period=='3m'  %}active{% endif %}">3 Months</a>
+    <a href="?period=6m"  class="filter-tab {% if period=='6m'  %}active{% endif %}">6 Months</a>
+    <a href="?period=1y"  class="filter-tab {% if period=='1y'  %}active{% endif %}">1 Year</a>
     <a href="?period=all" class="filter-tab {% if period=='all' %}active{% endif %}">All time</a>
+    <button type="button"
+            class="filter-tab {% if period=='custom' %}active{% endif %}"
+            onclick="toggleCustomRange()">
+      📅 Custom
+    </button>
+  </div>
+
+  <!-- Custom date range row (visible when Custom is active or toggled) -->
+  <div id="customRangeRow"
+       style="display:{% if period=='custom' %}flex{% else %}none{% endif %};align-items:center;gap:10px;flex-wrap:wrap;">
+    <form method="GET" action="{{ url_for('expenses.index') }}"
+          style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <input type="hidden" name="period" value="custom">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">From</label>
+        <input type="date" name="from" value="{{ date_from }}"
+               class="form-control" style="width:148px;padding:6px 10px;font-size:0.82rem;" required/>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">To</label>
+        <input type="date" name="to" value="{{ date_to }}"
+               class="form-control" style="width:148px;padding:6px 10px;font-size:0.82rem;" required/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+      {% if period=='custom' %}
+      <a href="?period=3m" class="btn btn-outline btn-sm">Clear</a>
+      {% endif %}
+    </form>
   </div>
 </div>
 
@@ -143,6 +171,21 @@
 {% block scripts %}
 <script>
 document.getElementById('addDate').value = new Date().toISOString().split('T')[0];
+
+function toggleCustomRange() {
+  const row = document.getElementById('customRangeRow');
+  const visible = row.style.display !== 'none';
+  row.style.display = visible ? 'none' : 'flex';
+  if (!visible) {
+    // Pre-fill sensible defaults: first of current month → today
+    const today = new Date().toISOString().split('T')[0];
+    const firstOfMonth = today.slice(0, 7) + '-01';
+    const fromInput = row.querySelector('input[name="from"]');
+    const toInput   = row.querySelector('input[name="to"]');
+    if (!fromInput.value) fromInput.value = firstOfMonth;
+    if (!toInput.value)   toInput.value   = today;
+  }
+}
 
 function openEditModal(id, amount, categoryId, note, date) {
   document.getElementById('editForm').action = `/expenses/${id}/edit`;

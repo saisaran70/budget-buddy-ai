@@ -11,6 +11,7 @@ class Goal(db.Model):
     goal_type = db.Column(db.String(50), default='savings')  # savings / investment / emergency / vacation
     target_amount = db.Column(db.Numeric(12, 2), nullable=False)
     current_amount = db.Column(db.Numeric(12, 2), default=0)
+    monthly_contribution = db.Column(db.Numeric(12, 2), default=0)
     target_date = db.Column(db.Date)
     status = db.Column(db.String(20), default='active')  # active / completed / paused
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -27,6 +28,14 @@ class Goal(db.Model):
     def amount_remaining(self):
         return max(0, float(self.target_amount) - float(self.current_amount))
 
+    @property
+    def months_to_goal(self):
+        contrib = float(self.monthly_contribution or 0)
+        if contrib <= 0 or self.amount_remaining <= 0:
+            return None
+        import math
+        return math.ceil(self.amount_remaining / contrib)
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -34,8 +43,10 @@ class Goal(db.Model):
             'goal_type': self.goal_type,
             'target_amount': float(self.target_amount),
             'current_amount': float(self.current_amount),
+            'monthly_contribution': float(self.monthly_contribution or 0),
             'progress_percent': self.progress_percent,
             'amount_remaining': self.amount_remaining,
+            'months_to_goal': self.months_to_goal,
             'status': self.status,
             'target_date': self.target_date.strftime('%Y-%m-%d') if self.target_date else None,
         }

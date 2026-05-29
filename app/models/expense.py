@@ -50,7 +50,7 @@ class Expense(db.Model):
     _ICON_EMOJI = {
         'utensils': '🍽️', 'car': '🚗', 'shopping-bag': '🛍️',
         'receipt': '⚡', 'film': '🎬', 'heart': '💊',
-        'book': '📚', 'circle': '📦',
+        'book': '📚', 'circle': '📦', 'target': '🎯',
     }
 
     def to_dict(self):

@@ -9,6 +9,7 @@ class UserSettings(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), unique=True, nullable=False)
     monthly_budget = db.Column(db.Numeric(12, 2), default=0)
     monthly_saving_goal = db.Column(db.Numeric(12, 2), default=0)
+    monthly_investing_goal = db.Column(db.Numeric(12, 2), default=0)
     ai_alerts_enabled = db.Column(db.Boolean, default=True)
     notifications_enabled = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

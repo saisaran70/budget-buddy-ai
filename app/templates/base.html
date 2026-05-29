@@ -100,13 +100,13 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="sidebar-user">
+      <a href="{{ url_for('settings.index') }}" class="sidebar-user" style="text-decoration:none;cursor:pointer;">
         <div class="sidebar-avatar">{{ current_user.full_name[0].upper() }}</div>
         <div class="sidebar-user-info">
           <div class="user-name">{{ current_user.full_name }}</div>
           <div class="user-email">{{ current_user.email }}</div>
         </div>
-      </div>
+      </a>
       <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color:var(--text-muted)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

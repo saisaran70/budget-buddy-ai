@@ -10,13 +10,17 @@ expenses_bp = Blueprint('expenses', __name__, url_prefix='/expenses')
 @expenses_bp.route('/')
 @login_required
 def index():
-    period = request.args.get('period', '3m')
-    expenses = _get_filtered_expenses(current_user.id, period)
+    period    = request.args.get('period', '3m')
+    date_from = request.args.get('from', '')
+    date_to   = request.args.get('to', '')
+    expenses  = _get_filtered_expenses(current_user.id, period, date_from, date_to)
     categories = ExpenseCategory.query.all()
     return render_template('expenses/index.html',
                            expenses=expenses,
                            categories=categories,
-                           period=period)
+                           period=period,
+                           date_from=date_from,
+                           date_to=date_to)
 
 
 @expenses_bp.route('/add', methods=['POST'])
@@ -86,9 +90,23 @@ def data():
     return jsonify([e.to_dict() for e in expenses])
 
 
-def _get_filtered_expenses(user_id, period):
+def _get_filtered_expenses(user_id, period, date_from='', date_to=''):
     from datetime import timedelta
     today = date.today()
+
+    if period == 'custom' and date_from and date_to:
+        try:
+            start = datetime.strptime(date_from, '%Y-%m-%d').date()
+            end   = datetime.strptime(date_to,   '%Y-%m-%d').date()
+            return (Expense.query
+                    .filter(Expense.user_id == user_id,
+                            Expense.expense_date >= start,
+                            Expense.expense_date <= end)
+                    .order_by(Expense.expense_date.desc())
+                    .all())
+        except ValueError:
+            pass
+
     if period == '3m':
         start = today.replace(day=1) - timedelta(days=60)
     elif period == '6m':
